@@ -1,0 +1,13 @@
+/data/
+/leukaemia_gene_list.xlsx
+/string.db
+/ppi_expanded.txt
+/ppi_initial.txt
+/props_ppi_expanded/
+/props_ppi_initial/
+/output-average_network_degree-*.txt
+/output-betweenness_centrality-*.txt
+/output-closeness_centrality-*.txt
+/output-degree_centrality-*.txt
+/output-edge_betweenness_centrality-*.txt
+/output-eigenvector_centrality-*.txt

@@ -6,8 +6,55 @@ from typing import Union
 import sqlite3
 import matplotlib.pyplot as plt
 import networkx as nx
+import time
 
 
+# Calculate node centralities (degree, eigenvector, betweenness, closeness), average degree for the network, and edge
+# betweenness centrality. Return dictionary containing the results and, by default, export them in TXT format too.
+def calculate_network_properties(network, export=True):
+    # A dictionary of the properties to calculate and the underlying functions to be called.
+    properties_mappings = {
+        'average_network_degree': lambda net: net.number_of_edges() / net.number_of_nodes(),
+        'degree_centrality': nx.degree_centrality,
+        'eigenvector_centrality': nx.eigenvector_centrality,
+        'betweenness_centrality': nx.betweenness_centrality,
+        'closeness_centrality': nx.closeness_centrality,
+        'edge_betweenness_centrality': nx.edge_betweenness_centrality
+    }
+
+    # Calculate all properties and save the results in a dictionary for better readability.
+    results = {}
+    for prop, func in properties_mappings.items():
+        results[prop] = func(network)
+
+    # Export the results in TXT format (if user chooses to).
+    if export:
+        for prop, data in results.items():
+            # Append time of export to avoid unwanted overwriting.
+            time_str = time.strftime('%d%b%Y-%H%M%S')
+            with open(f'output-{prop}-{time_str}.txt', 'w') as f:
+                if isinstance(data, dict):
+                    # (a) We are exporting a dictionary...
+                    # Before starting, sort dictionary in descending order!
+                    data = dict(sorted(data.items(),
+                                       key=lambda x: x[1], reverse=True))
+                    for key, value in data.items():
+                        # (i) If key is of type 'str', it should be a node...
+                        if isinstance(key, str):
+                            output_str = f'{key} {value}\n'
+                        # (ii) ...or it's a tuple of nodes (making an edge).
+                        else:
+                            output_str = f'{key[0]} {key[1]} {value}\n'
+                        f.write(output_str)
+                else:
+                    # (b) ...otherwise it's just a float.
+                    # TODO: That's a single float in a file... meh!
+                    f.write(f'{data}\n')
+
+    return results
+
+
+# Import every spreadsheets found in the working path as a list of DataFrames.
 def import_genes():
     script_path = pathlib.Path(__file__).parent.absolute()
 
@@ -71,9 +118,11 @@ if __name__ == '__main__':
     cursor = conn.execute(sql_get_ppi_2, gene_ids)
     ppi_expanded = cursor.fetchall()
 
-    # Create graphs for initial and expanded networks.
+    # Create graphs for initial and expanded networks, then calculate their properties.
     nw0 = nx.Graph()
     nw0.add_edges_from(ppi_initial)
+    props_nw0 = calculate_network_properties(nw0)
 
     nw1 = nx.Graph()
     nw1.add_edges_from(ppi_expanded)
+    props_nw1 = calculate_network_properties(nw1)
